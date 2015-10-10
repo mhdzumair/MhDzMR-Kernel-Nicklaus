@@ -1291,9 +1291,22 @@ static int xpad_probe(struct usb_interface *intf, const struct usb_device_id *id
 		error = usb_submit_urb(xpad->irq_in, GFP_KERNEL);
 		if (error)
 			goto err_deinit_input;
+
+		/*
+		 * Send presence packet.
+		 * This will force the controller to resend connection packets.
+		 * This is useful in the case we activate the module after the
+		 * adapter has been plugged in, as it won't automatically
+		 * send us info about the controllers.
+		 */
+		error = xpad_inquiry_pad_presence(xpad);
+		if (error)
+			goto err_kill_in_urb;
 	}
 	return 0;
 
+err_kill_in_urb:
+	usb_kill_urb(xpad->irq_in);
 err_deinit_input:
 	xpad_deinit_input(xpad);
 err_deinit_output:
