@@ -1259,6 +1259,68 @@ static int xpad_probe(struct usb_interface *intf, const struct usb_device_id *id
 			xpad->mapping |= MAP_STICKS_TO_NULL;
 	}
 
+	xpad->dev = input_dev;
+	usb_make_path(udev, xpad->phys, sizeof(xpad->phys));
+	strlcat(xpad->phys, "/input0", sizeof(xpad->phys));
+
+	input_dev->name = xpad_device[i].name;
+	input_dev->phys = xpad->phys;
+	usb_to_input_id(udev, &input_dev->id);
+	input_dev->dev.parent = &intf->dev;
+
+	input_set_drvdata(input_dev, xpad);
+
+	input_dev->open = xpad_open;
+	input_dev->close = xpad_close;
+
+	input_dev->evbit[0] = BIT_MASK(EV_KEY);
+
+	if (!(xpad->mapping & MAP_STICKS_TO_NULL)) {
+		input_dev->evbit[0] |= BIT_MASK(EV_ABS);
+		/* set up axes */
+		for (i = 0; xpad_abs[i] >= 0; i++)
+			xpad_set_up_abs(input_dev, xpad_abs[i]);
+	}
+
+	/* set up standard buttons */
+	for (i = 0; xpad_common_btn[i] >= 0; i++)
+		__set_bit(xpad_common_btn[i], input_dev->keybit);
+
+	/* set up model-specific ones */
+	if (xpad->xtype == XTYPE_XBOX360 || xpad->xtype == XTYPE_XBOX360W ||
+	    xpad->xtype == XTYPE_XBOXONE) {
+		for (i = 0; xpad360_btn[i] >= 0; i++)
+			__set_bit(xpad360_btn[i], input_dev->keybit);
+	} else {
+		for (i = 0; xpad_btn[i] >= 0; i++)
+			__set_bit(xpad_btn[i], input_dev->keybit);
+	}
+
+	if (xpad->mapping & MAP_DPAD_TO_BUTTONS) {
+		for (i = 0; xpad_btn_pad[i] >= 0; i++)
+			__set_bit(xpad_btn_pad[i], input_dev->keybit);
+	}
+
+	/*
+	 * This should be a simple else block. However historically
+	 * xbox360w has mapped DPAD to buttons while xbox360 did not. This
+	 * made no sense, but now we can not just switch back and have to
+	 * support both behaviors.
+	 */
+	if (!(xpad->mapping & MAP_DPAD_TO_BUTTONS) ||
+	    xpad->xtype == XTYPE_XBOX360W) {
+		for (i = 0; xpad_abs_pad[i] >= 0; i++)
+			xpad_set_up_abs(input_dev, xpad_abs_pad[i]);
+	}
+
+	if (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) {
+		for (i = 0; xpad_btn_triggers[i] >= 0; i++)
+			__set_bit(xpad_btn_triggers[i], input_dev->keybit);
+	} else {
+		for (i = 0; xpad_abs_triggers[i] >= 0; i++)
+			xpad_set_up_abs(input_dev, xpad_abs_triggers[i]);
+	}
+
 	error = xpad_init_output(intf, xpad);
 	if (error)
 		goto err_free_in_urb;
