@@ -667,6 +667,7 @@ find_check_entry(struct ipt_entry *e, struct net *net, const char *name,
 		return ret;
 
 	j = 0;
+	memset(&mtpar, 0, sizeof(mtpar));
 	mtpar.net	= net;
 	mtpar.table     = name;
 	mtpar.entryinfo = &e->ip;
