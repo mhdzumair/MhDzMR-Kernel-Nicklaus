@@ -550,12 +550,12 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 
 }
 
-static void tplug_es_suspend_work(struct early_suspend *p) {
+/*static void tplug_es_suspend_work(struct early_suspend *p) {
 	isSuspended = true;
 	pr_info("thunderplug : suspend called\n");
-}
+}*/
 
-static void tplug_es_resume_work(struct early_suspend *p) {
+/*static void tplug_es_resume_work(struct early_suspend *p) {
 	isSuspended = false;
 #ifdef CONFIG_SCHED_HMP
 	if(tplug_hp_style==1)
@@ -568,7 +568,7 @@ static void tplug_es_resume_work(struct early_suspend *p) {
 		queue_delayed_work_on(0, tplug_resume_wq, &tplug_resume_work,
 		            msecs_to_jiffies(10));
 	pr_info("thunderplug : resume called\n");
-}
+}*/
 
 /* Thunderplug load balancer */
 #ifdef CONFIG_SCHED_HMP
