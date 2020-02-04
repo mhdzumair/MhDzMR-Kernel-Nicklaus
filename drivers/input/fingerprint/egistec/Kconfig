@@ -1,0 +1,6 @@
+config FINGERPRINT_EGISTEC_ET360
+	tristate "Egistec fingerprint drvier support"
+	depends on INPUT_FINGERPRINT
+	help
+	  Say Y here to enable egistec fingerprint driver support!  
+
