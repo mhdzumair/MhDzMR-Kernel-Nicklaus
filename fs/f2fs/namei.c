@@ -418,10 +418,10 @@ static int f2fs_symlink(struct inode *dir, struct dentry *dentry,
 	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
 	struct inode *inode;
 	size_t len = strlen(symname);
-	size_t p_len;
-	char *p_str;
-	struct f2fs_str disk_link = FSTR_INIT(NULL, 0);
-	struct f2fs_encrypted_symlink_data *sd = NULL;
+	//size_t p_len;
+	//char *p_str;
+	//struct f2fs_str disk_link = FSTR_INIT(NULL, 0);
+	//struct f2fs_encrypted_symlink_data *sd = NULL;
 	int err;
 
 	if (len > dir->i_sb->s_blocksize)

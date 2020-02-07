@@ -1389,9 +1389,6 @@ unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
 	if (file) {
 		struct inode *inode = file_inode(file);
 
-		if (!file_mmap_ok(file, inode, pgoff, len))
-			return -EOVERFLOW;
-
 		switch (flags & MAP_TYPE) {
 		case MAP_SHARED:
 			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
