@@ -99,64 +99,6 @@ static struct dentry *binder_debugfs_dir_entry_proc;
 static atomic_t binder_last_id;
 static struct workqueue_struct *binder_deferred_workqueue;
 
-#define BINDER_MIN_ALLOC (1 * PAGE_SIZE)
-
-#define RT_PRIO_INHERIT			"v1.7"
-#ifdef RT_PRIO_INHERIT
-#include <linux/sched/rt.h>
-#endif
-
-#define MTK_BINDER_DEBUG        "v0.1"	/* defined for mtk internal added debug code */
-
-/*****************************************************************************************************/
-/*	MTK Death Notify	|                                               */
-/*	Debug Log Prefix	|	Description                                 */
-/*	---------------------------------------------------------------------               */
-/*	[DN #1]			|	Some one requests Death Notify from upper layer.                */
-/*	[DN #2]			|	Some one cancels Death Notify from upper layer.                 */
-/*	[DN #3]			|	Binder Driver sends Death Notify to all requesters' Binder Thread.      */
-/*	[DN #4]			|	Some requester's binder_thread_read() handles Death Notify works.       */
-/*	[DN #5]			|	Some requester sends confirmation to Binder Driver. (In IPCThreadState.cpp)*/
-/*	[DN #6]			|	Finally receive requester's confirmation from upper layer.      */
-/******************************************************************************************************/
-#define MTK_DEATH_NOTIFY_MONITOR	"v0.1"
-
-/**
- * Revision history of binder monitor
- *
- * v0.1   - enhance debug log
- * v0.2   - transaction timeout log
- * v0.2.1 - buffer allocation debug
- */
-#ifdef CONFIG_MT_ENG_BUILD
-#define BINDER_MONITOR			"v0.2.1"	/* BINDER_MONITOR only turn on for eng build */
-#endif
-
-#ifdef BINDER_MONITOR
-#define MAX_SERVICE_NAME_LEN		32
-/*******************************************************************************************************/
-/*	Payload layout of addService():                                         */
-/*		| Parcel header | IServiceManager.descriptor | Parcel header | Service name | ...               */
-/*	(Please refer ServiceManagerNative.java:addService())                   */
-/*	IServiceManager.descriptor is 'android.os.IServiceManager' interleaved with character '\0'.         */
-/*	that is, 'a', '\0', 'n', '\0', 'd', '\0', 'r', '\0', 'o', ...           */
-/*	so the offset of Service name = Parcel header x2 + strlen(android.os.IServiceManager) x2 = 8x2 + 26x2 = 68*/
-/*******************************************************************************************************/
-#define MAGIC_SERVICE_NAME_OFFSET	68
-
-#define MAX_ENG_TRANS_LOG_BUFF_LEN	10240
-static pid_t system_server_pid;
-static int binder_check_buf_pid;
-static int binder_check_buf_tid;
-static unsigned long binder_log_level;
-char aee_msg[512];
-char aee_word[100];
-#define TRANS_LOG_LEN 210
-char large_msg[TRANS_LOG_LEN];
-
-#define BINDER_PERF_EVAL		"V0.1"
-#endif
-
 #define BINDER_DEBUG_ENTRY(name) \
 static int binder_##name##_open(struct inode *inode, struct file *file) \
 { \
@@ -4933,49 +4875,6 @@ static int binder_mmap(struct file *filp, struct vm_area_struct *vma)
 		goto err_bad_arg;
 	}
 	vma->vm_flags = (vma->vm_flags | VM_DONTCOPY) & ~VM_MAYWRITE;
-
-	mutex_lock(&binder_mmap_lock);
-	if (proc->buffer) {
-		ret = -EBUSY;
-		failure_string = "already mapped";
-		goto err_already_mapped;
-	}
-
-	area = get_vm_area(vma->vm_end - vma->vm_start, VM_IOREMAP);
-	if (area == NULL) {
-		ret = -ENOMEM;
-		failure_string = "get_vm_area";
-		goto err_get_vm_area_failed;
-	}
-	proc->buffer = area->addr;
-	proc->user_buffer_offset = vma->vm_start - (uintptr_t) proc->buffer;
-	mutex_unlock(&binder_mmap_lock);
-
-#ifdef CONFIG_CPU_CACHE_VIPT
-	if (cache_is_vipt_aliasing()) {
-		while (CACHE_COLOUR((vma->vm_start ^ (uint32_t) proc->buffer))) {
-			pr_info
-			    ("binder_mmap: %d %lx-%lx maps %p bad alignment\n",
-			     proc->pid, vma->vm_start, vma->vm_end, proc->buffer);
-			vma->vm_start += PAGE_SIZE;
-		}
-	}
-#endif
-	if (vma->vm_end - vma->vm_start < BINDER_MIN_ALLOC) {
-		ret = -EINVAL;
-		failure_string = "VMA size < BINDER_MIN_ALLOC";
-		goto err_vma_too_small;
-	}
-	proc->pages =
-	    kzalloc(sizeof(proc->pages[0]) *
-		    ((vma->vm_end - vma->vm_start) / PAGE_SIZE), GFP_KERNEL);
-	if (proc->pages == NULL) {
-		ret = -ENOMEM;
-		failure_string = "alloc page array";
-		goto err_alloc_pages_failed;
-	}
-	proc->buffer_size = vma->vm_end - vma->vm_start;
-
 	vma->vm_ops = &binder_vm_ops;
 	vma->vm_private_data = proc;
 
@@ -4983,17 +4882,6 @@ static int binder_mmap(struct file *filp, struct vm_area_struct *vma)
 
 	return ret;
 
-err_alloc_small_buf_failed:
-	kfree(proc->pages);
-	proc->pages = NULL;
-err_alloc_pages_failed:
-err_vma_too_small:
-	mutex_lock(&binder_mmap_lock);
-	vfree(proc->buffer);
-	proc->buffer = NULL;
-err_get_vm_area_failed:
-err_already_mapped:
-	mutex_unlock(&binder_mmap_lock);
 err_bad_arg:
 	pr_err("binder_mmap: %d %lx-%lx %s failed %d\n",
 	       proc->pid, vma->vm_start, vma->vm_end, failure_string, ret);
