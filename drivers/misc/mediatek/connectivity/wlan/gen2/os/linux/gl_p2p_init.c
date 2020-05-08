@@ -29,7 +29,7 @@
 */
 
 #define P2P_INF_NAME "p2p%d"
-#if CFG_TC1_FEATURE || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
+#if defined(CFG_TC1_FEATURE) || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
 #define AP_INF_NAME  "wlan%d"
 #else
 #define AP_INF_NAME  "ap%d"

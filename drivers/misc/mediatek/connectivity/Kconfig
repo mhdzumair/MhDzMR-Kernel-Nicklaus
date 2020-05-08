@@ -292,6 +292,10 @@ config MTK_CONN_LTE_IDC_SUPPORT
 	help
 	  This option enables CONN LTE IDC support
 
+config MTK_COMBO_AOSP_TETHERING_SUPPORT
+	bool "Multiplex wlan0 for both AP and STA"
+	default n
+
 menuconfig GPS
         tristate "GPS drivers"
         default y

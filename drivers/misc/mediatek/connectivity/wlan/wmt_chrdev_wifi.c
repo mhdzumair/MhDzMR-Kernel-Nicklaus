@@ -29,6 +29,7 @@
 #include <linux/inetdevice.h>
 #include <net/net_namespace.h>
 #include <linux/string.h>
+#include <linux/rtnetlink.h>
 
 #include "wmt_exp.h"
 #include "stp_exp.h"
@@ -69,7 +70,7 @@ static struct device *wmtwifi_dev;
 static struct semaphore wr_mtx;
 
 #define WLAN_IFACE_NAME "wlan0"
-#if CFG_TC1_FEATURE || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
+#if defined(CFG_TC1_FEATURE) || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
 #define LEGACY_IFACE_NAME "legacy0"
 #endif
 
@@ -82,7 +83,7 @@ enum {
 static INT32 wlan_mode = WLAN_MODE_HALT;
 static INT32 powered;
 static INT8 *ifname = WLAN_IFACE_NAME;
-#if CFG_TC1_FEATURE || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
+#if defined(CFG_TC1_FEATURE) || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
 volatile INT32 wlan_if_changed = 0;
 EXPORT_SYMBOL(wlan_if_changed);
 #endif
@@ -314,7 +315,7 @@ ssize_t WIFI_write(struct file *filp, const char __user *buf, size_t count, loff
 				powered = 0;
 				retval = count;
 				wlan_mode = WLAN_MODE_HALT;
-#if CFG_TC1_FEATURE || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
+#if defined(CFG_TC1_FEATURE) || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
 				ifname = WLAN_IFACE_NAME;
 				wlan_if_changed = 0;
 #endif
@@ -384,7 +385,7 @@ ssize_t WIFI_write(struct file *filp, const char __user *buf, size_t count, loff
 			}
 
 			if (local[0] == 'S' || local[0] == 'P') {
-#if CFG_TC1_FEATURE || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
+#if defined(CFG_TC1_FEATURE) || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
 				if (strcmp(ifname, WLAN_IFACE_NAME) != 0) {
 					/* Restore NIC name to wlan0 */
 					rtnl_lock();
@@ -411,7 +412,7 @@ ssize_t WIFI_write(struct file *filp, const char __user *buf, size_t count, loff
 					retval = count;
 				}
 			} else if (local[0] == 'A') {
-#if CFG_TC1_FEATURE || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
+#if defined(CFG_TC1_FEATURE) || defined(CONFIG_MTK_COMBO_AOSP_TETHERING_SUPPORT)
 				if (strcmp(ifname, LEGACY_IFACE_NAME) != 0) {
 					/* Change NIC name to legacy0, since wlan0 is used for AP interface */
 					rtnl_lock();
