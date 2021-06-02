@@ -1053,6 +1053,12 @@ void mt_mt65xx_led_work(struct work_struct *work)
 	mutex_unlock(&leds_mutex);
 }
 
+#ifdef CONFIG_MTK_AAL_SUPPORT
+int wind_hbm_flag = 1;
+int hbm_last_level = 0;
+int wind_hbm_last_flag=1;
+#endif
+
  //tuwenzan@wind-mobi.com modify at 20170321 begin
 #ifdef CONFIG_WIND_BACKLIGHT_CURVE
 extern int wind_hbm_flag;
